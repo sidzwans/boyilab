@@ -1,7 +1,14 @@
 # 📘 Home Lab Master Architecture & Recovery Guide
 
-**Version:** 1.3.1 (The Lounge IRC / Cross-Seed Fix / Script Automation)
+**Version:** 1.3.2 (Autobrr Integration / DarkPeers Automation / Full System)
 **Timezone:** `Asia/Kuala_Lumpur` (UTC+8)
+
+**Changes in this version:**
+
+1. **Phase 3D (`docker-compose.yml`):** Added `autobrr` container to the stack.
+2. **Phase 4 (New):** Added the complete "Autobrr Configuration & DarkPeers Strategy" section.
+3. **Phase 5 (Backup):** Renumbered from Phase 4. Added `autobrr` to the stop/start logic in `daily_backup.sh`.
+4. **VPN Healer Script:** Added `autobrr` to the monitored container list.
 
 ## 🏗️ Architecture Overview
 
@@ -9,7 +16,7 @@
 | --- | --- | --- | --- | --- |
 | **OCI Gateway** | `instance-xxxx` | Public IP | `10.66.66.1` | Internet Gateway, VPN Hub, Monitoring |
 | **Sentinel** | `sentinel` | `192.168.1.2` | `10.66.66.3` | Control Plane, **NFS Server (Cold Storage)** |
-| **Forge** | `forge` | `192.168.1.3` | `10.66.66.5` | Data Plane, **NFS Client**, Media Stack, IRC |
+| **Forge** | `forge` | `192.168.1.3` | `10.66.66.5` | Data Plane, **NFS Client**, Media Stack, IRC, Autobrr |
 
 ---
 
@@ -87,7 +94,7 @@ sudo mount -a
 
 # Create Directories
 sudo mkdir -p /media/storage/{movies,tv,downloads,config,nextcloud_data}
-sudo mkdir -p /media/storage/config/{cross-seed,thelounge}
+sudo mkdir -p /media/storage/config/{cross-seed,thelounge,autobrr}
 sudo chown -R 1000:1000 /media/storage
 
 # Create App Configs
@@ -650,6 +657,15 @@ sudo systemctl restart nfs-kernel-server
           type: bazarr
           url: http://10.66.66.5:6767
           key: xxxx
+    
+    - Autobrr:
+        icon: autobrr.png
+        href: http://10.66.66.5:7474
+        description: Automation
+        widget:
+          type: autobrr
+          url: http://10.66.66.5:7474
+          key: xxxx
 
 ```
 
@@ -780,6 +796,7 @@ sudo iptables -I INPUT -p tcp --dport 9696 -j ACCEPT  # Prowlarr
 sudo iptables -I INPUT -p tcp --dport 7878 -j ACCEPT  # Radarr
 sudo iptables -I INPUT -p tcp --dport 8989 -j ACCEPT  # Sonarr
 sudo iptables -I INPUT -p tcp --dport 6767 -j ACCEPT  # Bazarr
+sudo iptables -I INPUT -p tcp --dport 7474 -j ACCEPT  # Autobrr
 # Cross-Seed / The Lounge
 sudo iptables -I INPUT -p tcp --dport 2468 -j ACCEPT
 sudo iptables -I INPUT -p tcp --dport 9000 -j ACCEPT
@@ -865,6 +882,7 @@ services:
       - "7878:7878"     # Radarr
       - "8989:8989"     # Sonarr
       - "6767:6767"     # Bazarr
+      - "7474:7474"     # Autobrr
       - "2468:2468"     # Cross-Seed (Optional)
       - "9000:9000"     # The Lounge (IRC)
       - "8388:8388/tcp" # Shadowsocks
@@ -955,6 +973,19 @@ services:
       - /media/storage:/data
     network_mode: "service:gluetun"
     depends_on: ["gluetun"]
+    restart: unless-stopped
+
+  autobrr:
+    image: ghcr.io/autobrr/autobrr:latest
+    container_name: autobrr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Kuala_Lumpur
+    volumes:
+      - /media/storage/config/autobrr:/config
+    network_mode: "service:gluetun"
+    depends_on: ["gluetun", "prowlarr", "radarr", "sonarr"]
     restart: unless-stopped
 
   jellyfin:
@@ -1147,14 +1178,96 @@ services:
 
 ---
 
-## 💾 Phase 4: Master Backup System (Crash-Proof)
+## ⚡ Phase 4: Autobrr Configuration (DarkPeers)
+
+**Goal:** Automatic downloading via IRC Announce channels.
+**Method:** "Push" approach (Shotgun) - Autobrr sends all releases to Radarr/Sonarr; apps decide what to keep.
+
+### A. Credentials
+
+* **Passkey:** Used for *downloading* the .torrent file.
+* **RSS Key:** Used for *listening* (the feed). **Autobrr requires the RSS Key.**
+
+### B. The Database Conflict Fix (CRITICAL)
+
+* **Problem:** If you manually create the Network/Channel in "IRC Settings" first, the Indexer setup will fail with `UNIQUE constraint failed`.
+* **Fix:**
+1. Go to **Settings  IRC**.
+2. **DELETE** the `Darkpeers` network entirely (Click trash icon).
+3. Go to **Indexers** and add DarkPeers.
+4. Let the Indexer **automatically** create the network and join the channel.
+
+
+
+### C. Step-by-Step Configuration
+
+1. **Add Clients (The Connectors):**
+* Go to **Clients**  **Add New**.
+* **Radarr:**
+* Name: `Forge Radarr`
+* Host: `http://localhost:7878`
+* Key: (From Radarr Settings)
+* **Action:** Click **Test** (Must be Green). Save.
+
+
+* **Sonarr:**
+* Name: `Forge Sonarr`
+* Host: `http://localhost:8989`
+* Key: (From Sonarr Settings)
+* **Action:** Click **Test** (Must be Green). Save.
+
+
+
+
+2. **Add Indexer (The Listener):**
+* Go to **Indexers**  **Add New**.
+* Select **DarkPeers**.
+* **RSS Key:** Paste your DarkPeers RSS Key.
+* **Nick:** `Boyi_Bot`
+* **NickServ:** Leave blank (or fill if needed).
+* **Note:** Do not fill in channels manually.
+* **Save.** (Check logs for `INF Monitoring channel #dpannounce`).
+
+
+3. **Create Filter (The Trigger):**
+* Go to **Filters**  **Add New**.
+* **Name:** `DarkPeers Watch`.
+* **Indexer:** Check `DarkPeers`.
+* **Actions Tab:**
+* Add Action  Select **Radarr** (This acts as "Push").
+* Name: `Push to Radarr`
+* Client: `Forge Radarr`
+* *Note: There is NO Test button on this specific screen.*
+* **Save Action.**
+* Repeat for Sonarr (`Push to Sonarr`).
+
+
+* **Save Filter.**
+
+
+
+### D. Verification Protocol
+
+How to confirm it works without a successful download:
+
+1. **Check Logs:** Look for `INF Monitoring channel #dpannounce`.
+2. **Wait for Release:** Watch for a new entry in IRC.
+3. **Check for Rejection:**
+* `DBG radarr: release push rejected: [Title] reasons: '[Unknown Movie]'`
+* **Verdict:** **SUCCESS**. The pipeline is open; Radarr just didn't want that specific file.
+
+
+
+---
+
+## 💾 Phase 5: Master Backup System (Crash-Proof)
 
 **Script:** `/usr/local/bin/daily_backup.sh` (On BOTH servers)
 
 ```bash
 #!/bin/bash
 # ==============================================================================
-#  MASTER BACKUP SCRIPT (v1.2.0 - NFS Aware / Disk-Safe)
+#  MASTER BACKUP SCRIPT (v1.3.0 - NFS Aware / Disk-Safe)
 # ==============================================================================
 
 # --- CONFIGURATION ------------------------------------------------------------
@@ -1196,8 +1309,8 @@ echo "Stopping containers..."
 if [ "$HOSTNAME" == "sentinel" ]; then
     docker stop homeassistant adguardhome mosquitto
 elif [ "$HOSTNAME" == "forge" ]; then
-    # Cross-Seed added to stop list
-    docker stop qbittorrent prowlarr jellyfin adguardhome radarr sonarr flaresolverr bazarr nextcloud nextcloud-db cross-seed thelounge
+    # Cross-Seed and Autobrr added to stop list
+    docker stop qbittorrent prowlarr jellyfin adguardhome radarr sonarr flaresolverr bazarr nextcloud nextcloud-db cross-seed thelounge autobrr
 fi
 
 # [3] ARCHIVE FILES (Loop-Proof)
@@ -1225,7 +1338,7 @@ echo "Restarting containers..."
 if [ "$HOSTNAME" == "sentinel" ]; then
     docker start mosquitto adguardhome homeassistant
 elif [ "$HOSTNAME" == "forge" ]; then
-    docker start adguardhome prowlarr jellyfin qbittorrent radarr sonarr flaresolverr bazarr nextcloud-db nextcloud cross-seed thelounge
+    docker start adguardhome prowlarr jellyfin qbittorrent radarr sonarr flaresolverr bazarr nextcloud-db nextcloud cross-seed thelounge autobrr
 fi
 
 # [5] UPLOAD
@@ -1298,7 +1411,7 @@ rclone sync "$SOURCE_DIR" "$DEST_DIR" \
 
 ```bash
 #!/bin/bash
-CONTAINERS="gluetun qbittorrent prowlarr radarr sonarr flaresolverr jellyfin bazarr cross-seed thelounge"
+CONTAINERS="gluetun qbittorrent prowlarr radarr sonarr flaresolverr jellyfin bazarr cross-seed thelounge autobrr"
 BOT_TOKEN="YOUR_TOKEN"
 CHAT_ID="YOUR_ID"
 
@@ -1317,4 +1430,3 @@ if [ "$HEALTH" == "unhealthy" ]; then
 fi
 
 ```
-
