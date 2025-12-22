@@ -1,0 +1,212 @@
+- Cloud Gateway (OCI):
+    - OCI Console:
+        icon: si-oracle
+        href: [https://cloud.oracle.com](https://cloud.oracle.com)
+        description: Latency Check
+        ping: [http://10.66.66.1:61208](http://10.66.66.1:61208)
+
+    - OCI CPU:
+        icon: mdi-cpu-64-bit
+        description: Ampere A1 Load
+        widget:
+          type: glances
+          url: [http://10.66.66.1:61208](http://10.66.66.1:61208)
+          version: 3
+          metric: cpu
+
+    - OCI Memory:
+        icon: mdi-memory
+        description: RAM Usage
+        widget:
+          type: glances
+          url: [http://10.66.66.1:61208](http://10.66.66.1:61208)
+          version: 3
+          metric: memory
+
+    - OCI Network:
+            icon: mdi-ethernet
+            description: Public Traffic
+            widget:
+              type: glances
+              url: [http://10.66.66.1:61208](http://10.66.66.1:61208)
+              version: 3
+              # CHANGE 'enp0s6' if your interface name is different
+              metric: network:enp0s6
+
+    - OCI Storage:
+        icon: mdi-harddisk
+        description: Boot Volume
+        widget:
+          type: glances
+          url: [http://10.66.66.1:61208](http://10.66.66.1:61208)
+          version: 3
+          metric: fs:/
+
+    - OCI Monthly Network:
+        icon: mdi-calendar-clock
+        description: "Limits: 10TB TX"
+        widget:
+          type: customapi
+          url: [http://10.66.66.1:8080/stats.json](http://10.66.66.1:8080/stats.json)
+          refresh: 600000 # 10 minutes
+          mappings:
+            - field: tx
+              label: BILLABLE (TX)
+            - field: rx
+              label: FREE (RX)
+
+-  On-Premise Cluster:
+    - Sentinel (Control):
+        icon: /icons/orange-pi.png
+        href: [http://192.168.1.2:61208](http://192.168.1.2:61208)
+        widget:
+            type: glances
+            url: [http://192.168.1.2:61208](http://192.168.1.2:61208)
+            metric: "info"
+
+    - Sentinel Storage (NVMe):
+        icon: mdi-harddisk
+        description: "Root: /"
+        widget:
+          type: glances
+          url: [http://192.168.1.2:61208](http://192.168.1.2:61208)
+          version: 3
+          metric: fs:/
+    - Sentinel Network:
+        icon: mdi-ethernet
+        description: Public Traffic
+        widget:
+          type: glances
+          url: [http://192.168.1.2:61208](http://192.168.1.2:61208)
+          version: 3
+          metric: network:enP3p49s0
+
+    # --- FORGE (Media Node) ---
+    - Forge (Media):
+        icon: /icons/orange-pi.png
+        href: [http://192.168.1.3:61208](http://192.168.1.3:61208)
+        widget:
+            type: glances
+            url: [http://192.168.1.3:61208](http://192.168.1.3:61208)
+            metric: "info"
+    - Forge Storage (NVMe):
+        icon: mdi-harddisk-plus
+        description: "Root: /"
+        widget:
+          type: glances
+          url: [http://192.168.1.3:61208](http://192.168.1.3:61208)
+          version: 3
+          metric: fs:/
+
+    - Forge Network:
+        icon: mdi-ethernet
+        description: Public Traffic
+        widget:
+          type: glances
+          url: [http://192.168.1.3:61208](http://192.168.1.3:61208)
+          version: 3
+          metric: network:enP3p49s0
+
+- Infrastructure:
+    - Portainer:
+        icon: portainer.png
+        href: [https://10.66.66.3:9443](https://10.66.66.3:9443)
+        description: Docker Manager
+        widget:
+          type: portainer
+          url: [https://192.168.1.2:9443](https://192.168.1.2:9443)
+          env: 9
+          key: xxxx
+
+    - AdGuard Home (Primary):
+        icon: adguard-home.png
+        href: [http://10.66.66.3:8085](http://10.66.66.3:8085)
+        description: Sentinel DNS
+        widget:
+          type: adguard
+          url: [http://10.66.66.3:8085](http://10.66.66.3:8085)
+          username: admin
+          password: xxxx
+
+    - AdGuard Home (Replica):
+        icon: adguard-home.png
+        href: [http://10.66.66.5:8085](http://10.66.66.5:8085)
+        description: Sentinel DNS
+        widget:
+          type: adguard
+          url: [http://10.66.66.5:8085](http://10.66.66.5:8085)
+          username: admin
+          password: xxxx
+
+- Media Lab:
+    - Jellyfin:
+        icon: jellyfin.png
+        href: [http://10.66.66.5:8096](http://10.66.66.5:8096)
+        description: Watch Movies
+        widget:
+          type: jellyfin
+          url: [http://10.66.66.5:8096](http://10.66.66.5:8096)
+          key: xxxx
+          enableNowPlaying: true
+
+    - qBittorrent:
+        icon: qbittorrent.png
+        href: [http://10.66.66.5:8080/](http://10.66.66.5:8080/)
+        description: Downloader
+        widget:
+          type: qbittorrent
+          url: [http://10.66.66.5:8080](http://10.66.66.5:8080)
+          username: admin
+          password: xxxx
+
+    - Prowlarr:
+        icon: prowlarr.png
+        href: [http://10.66.66.5:9696](http://10.66.66.5:9696)
+        description: Indexer Manager
+        widget:
+          type: prowlarr
+          url: [http://10.66.66.5:9696](http://10.66.66.5:9696)
+          key: xxxx
+
+    - Radarr:
+        icon: radarr
+        href: [http://10.66.66.5:7878](http://10.66.66.5:7878)
+        description: Movie Manager
+        widget:
+          type: radarr
+          url: [http://10.66.66.5:7878](http://10.66.66.5:7878)
+          key: xxxx
+          enableQueue: true
+
+    - Sonarr:
+        icon: sonarr
+        href: [http://10.66.66.5:8989](http://10.66.66.5:8989)
+        description: TV Series Manager
+        widget:
+          type: sonarr
+          url: [http://10.66.66.5:8989](http://10.66.66.5:8989)
+          key: xxxx
+          enableQueue: true
+    - Bazarr:
+        icon: bazarr.png
+        href: [http://10.66.66.5:6767](http://10.66.66.5:6767)
+        description: Subtitle Manager
+        widget:
+          type: bazarr
+          url: [http://10.66.66.5:6767](http://10.66.66.5:6767)
+          key: xxxx
+    
+    - Autobrr:
+        icon: autobrr.png
+        href: [http://10.66.66.5:7474](http://10.66.66.5:7474)
+        description: Automation
+        widget:
+          type: autobrr
+          url: [http://10.66.66.5:7474](http://10.66.66.5:7474)
+          key: xxxx
+
+    - The Lounge:
+        icon: thelounge.png
+        href: [http://10.66.66.5:9000](http://10.66.66.5:9000)
+        description: IRC Client
+        ping: [http://10.66.66.5:9000](http://10.66.66.5:9000)
