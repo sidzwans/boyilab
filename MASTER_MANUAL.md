@@ -1,14 +1,22 @@
+I have updated the documentation to **Version 1.3.3**. This version formally incorporates the dashboard widgets for both **Autobrr** and **The Lounge** into the Sentinel configuration.
+
+### **Changelog (v1.3.2 \to v1.3.3)**
+
+* **Phase 2C (`services.yaml`):** Added `The Lounge` (IRC Client) service block with a health ping. Validated the existence of the `Autobrr` widget block.
+
+Here is the complete, updated manual.
+
+```markdown
 # 📘 Home Lab Master Architecture & Recovery Guide
 
-**Version:** 1.3.2 (Autobrr Integration / DarkPeers Automation / Full System)
+**Version:** 1.3.3 (Dashboard Expansion / Full System)
 **Timezone:** `Asia/Kuala_Lumpur` (UTC+8)
 
 **Changes in this version:**
 
-1. **Phase 3D (`docker-compose.yml`):** Added `autobrr` container to the stack.
-2. **Phase 4 (New):** Added the complete "Autobrr Configuration & DarkPeers Strategy" section.
-3. **Phase 5 (Backup):** Renumbered from Phase 4. Added `autobrr` to the stop/start logic in `daily_backup.sh`.
-4. **VPN Healer Script:** Added `autobrr` to the monitored container list.
+1. **Phase 2C (`services.yaml`):** Added **The Lounge** and **Autobrr** to the Homepage Dashboard.
+2. **Phase 4:** Full Autobrr & DarkPeers "Push" strategy documentation.
+3. **Phase 5 (Backup):** Includes `autobrr` and `thelounge` in the safety stop/start logic.
 
 ## 🏗️ Architecture Overview
 
@@ -27,9 +35,10 @@
 ```bash
 sudo apt update && sudo apt upgrade -y
 sudo apt install curl vim git htop net-tools wireguard resolvconf iptables-persistent rclone -y
-curl -fsSL https://get.docker.com | sh
+curl -fsSL [https://get.docker.com](https://get.docker.com) | sh
 sudo usermod -aG docker $USER
 sudo timedatectl set-timezone Asia/Kuala_Lumpur
+
 
 ```
 
@@ -57,12 +66,13 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl enable --now glances
 
+
 ```
 
 ### 3. OCI Gateway Specifics
 
 * **Oracle Firewall:** Allow Ingress UDP 51820.
-* **IP Forwarding:** Edit `/etc/sysctl.conf`  `net.ipv4.ip_forward=1`  `sudo sysctl -p`.
+* **IP Forwarding:** Edit `/etc/sysctl.conf` \to `net.ipv4.ip_forward=1` \to `sudo sysctl -p`.
 
 ### 4. Sentinel Specifics
 
@@ -79,6 +89,7 @@ mkdir -p /home/boyi/homepage/config
 mkdir -p /home/boyi/homepage/icons # Local Icons Host Folder
 mkdir -p /home/boyi/backups
 sudo chown -R 1883:1883 /home/boyi/mosquitto
+
 
 ```
 
@@ -106,6 +117,7 @@ mkdir -p /home/boyi/portainer-agent
 sudo chown -R 33:33 /media/storage/nextcloud_data
 sudo chown -R 33:33 /home/boyi/nextcloud/html
 
+
 ```
 
 ---
@@ -123,6 +135,7 @@ sudo iptables -I INPUT -i wg0 -p tcp --dport 8080 -j ACCEPT  # Bandwidth API
 # Routing
 sudo iptables -t nat -A POSTROUTING -o enp0s6 -j MASQUERADE
 sudo netfilter-persistent save
+
 
 ```
 
@@ -143,6 +156,7 @@ User=ubuntu
 [Install]
 WantedBy=multi-user.target
 
+
 ```
 
 *Enable:* `sudo systemctl enable --now bandwidth-web`
@@ -157,6 +171,7 @@ WantedBy=multi-user.target
 RX=$(vnstat -m -i enp0s6 --oneline | cut -d';' -f9)
 TX=$(vnstat -m -i enp0s6 --oneline | cut -d';' -f10)
 echo "{\"rx\": \"$RX\", \"tx\": \"$TX\"}" > /home/ubuntu/bandwidth-monitor/stats.json
+
 
 ```
 
@@ -176,9 +191,10 @@ SERVER_NAME=$(hostname)
 
 CAPTION="📊 <b>OCI Bandwidth Report</b>%0AServer: <i>$SERVER_NAME</i>%0A<b>⚠️ Billable (TX): $BILLABLE / 10 TB</b>%0A<pre>$TABLE</pre>"
 
-curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendPhoto" \
+curl -s -X POST "[https://api.telegram.org/bot$BOT_TOKEN/sendPhoto](https://api.telegram.org/bot$BOT_TOKEN/sendPhoto)" \
      -F chat_id="$CHAT_ID" -F photo="@$IMAGE_PATH" \
      -F caption="$CAPTION" -F parse_mode="HTML"
+
 
 ```
 
@@ -196,7 +212,7 @@ STATE_DIR="/tmp/lab_monitor"
 mkdir -p "$STATE_DIR"
 
 send_msg() {
-    curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
+    curl -s -X POST "[https://api.telegram.org/bot$BOT_TOKEN/sendMessage](https://api.telegram.org/bot$BOT_TOKEN/sendMessage)" \
         -d chat_id="$CHAT_ID" -d text="$1" -d parse_mode="HTML" > /dev/null
 }
 
@@ -219,6 +235,7 @@ for target in "${TARGETS[@]}"; do
         fi
     fi
 done
+
 
 ```
 
@@ -365,6 +382,7 @@ fi
 
 netfilter-persistent save > /dev/null 2>&1
 
+
 ```
 
 ### D. Cron Schedule (OCI)
@@ -380,6 +398,7 @@ netfilter-persistent save > /dev/null 2>&1
 
 # Watchtower Health Check (Every 5 mins)
 */5 * * * * /usr/local/bin/monitor_lab.sh
+
 
 ```
 
@@ -398,6 +417,7 @@ netfilter-persistent save > /dev/null 2>&1
 nameserver 127.0.0.1
 nameserver 10.66.66.5
 nameserver 8.8.8.8
+
 
 ```
 
@@ -421,6 +441,7 @@ sudo iptables -I INPUT -p tcp --dport 61208 -j ACCEPT # Glances
 sudo iptables -I INPUT -i lo -j ACCEPT
 sudo netfilter-persistent save
 
+
 ```
 
 ### B. NFS Server (Cold Storage)
@@ -436,6 +457,7 @@ mkdir -p /home/boyi/sentinel_media
 sudo chown -R 1000:1000 /home/boyi/sentinel_media
 sudo chmod 775 /home/boyi/sentinel_media
 
+
 ```
 
 **2. Configure Export (`/etc/exports`):**
@@ -445,6 +467,7 @@ sudo chmod 775 /home/boyi/sentinel_media
 ```text
 /home/boyi/sentinel_media 192.168.1.3(rw,sync,no_subtree_check,all_squash,anonuid=1000,anongid=1000)
 
+
 ```
 
 **3. Apply:**
@@ -452,6 +475,7 @@ sudo chmod 775 /home/boyi/sentinel_media
 ```bash
 sudo exportfs -a
 sudo systemctl restart nfs-kernel-server
+
 
 ```
 
@@ -463,16 +487,16 @@ sudo systemctl restart nfs-kernel-server
 - Cloud Gateway (OCI):
     - OCI Console:
         icon: si-oracle
-        href: https://cloud.oracle.com
+        href: [https://cloud.oracle.com](https://cloud.oracle.com)
         description: Latency Check
-        ping: http://10.66.66.1:61208
+        ping: [http://10.66.66.1:61208](http://10.66.66.1:61208)
 
     - OCI CPU:
         icon: mdi-cpu-64-bit
         description: Ampere A1 Load
         widget:
           type: glances
-          url: http://10.66.66.1:61208
+          url: [http://10.66.66.1:61208](http://10.66.66.1:61208)
           version: 3
           metric: cpu
 
@@ -481,7 +505,7 @@ sudo systemctl restart nfs-kernel-server
         description: RAM Usage
         widget:
           type: glances
-          url: http://10.66.66.1:61208
+          url: [http://10.66.66.1:61208](http://10.66.66.1:61208)
           version: 3
           metric: memory
 
@@ -490,7 +514,7 @@ sudo systemctl restart nfs-kernel-server
             description: Public Traffic
             widget:
               type: glances
-              url: http://10.66.66.1:61208
+              url: [http://10.66.66.1:61208](http://10.66.66.1:61208)
               version: 3
               # CHANGE 'enp0s6' if your interface name is different
               metric: network:enp0s6
@@ -500,7 +524,7 @@ sudo systemctl restart nfs-kernel-server
         description: Boot Volume
         widget:
           type: glances
-          url: http://10.66.66.1:61208
+          url: [http://10.66.66.1:61208](http://10.66.66.1:61208)
           version: 3
           metric: fs:/
 
@@ -509,7 +533,7 @@ sudo systemctl restart nfs-kernel-server
         description: "Limits: 10TB TX"
         widget:
           type: customapi
-          url: http://10.66.66.1:8080/stats.json
+          url: [http://10.66.66.1:8080/stats.json](http://10.66.66.1:8080/stats.json)
           refresh: 600000 # 10 minutes
           mappings:
             - field: tx
@@ -520,10 +544,10 @@ sudo systemctl restart nfs-kernel-server
 -  On-Premise Cluster:
     - Sentinel (Control):
         icon: /icons/orange-pi.png
-        href: http://192.168.1.2:61208
+        href: [http://192.168.1.2:61208](http://192.168.1.2:61208)
         widget:
             type: glances
-            url: http://192.168.1.2:61208
+            url: [http://192.168.1.2:61208](http://192.168.1.2:61208)
             metric: "info"
 
     - Sentinel Storage (NVMe):
@@ -531,7 +555,7 @@ sudo systemctl restart nfs-kernel-server
         description: "Root: /"
         widget:
           type: glances
-          url: http://192.168.1.2:61208
+          url: [http://192.168.1.2:61208](http://192.168.1.2:61208)
           version: 3
           metric: fs:/
     - Sentinel Network:
@@ -539,24 +563,24 @@ sudo systemctl restart nfs-kernel-server
         description: Public Traffic
         widget:
           type: glances
-          url: http://192.168.1.2:61208
+          url: [http://192.168.1.2:61208](http://192.168.1.2:61208)
           version: 3
           metric: network:enP3p49s0
 
     # --- FORGE (Media Node) ---
     - Forge (Media):
         icon: /icons/orange-pi.png
-        href: http://192.168.1.3:61208
+        href: [http://192.168.1.3:61208](http://192.168.1.3:61208)
         widget:
             type: glances
-            url: http://192.168.1.3:61208
+            url: [http://192.168.1.3:61208](http://192.168.1.3:61208)
             metric: "info"
     - Forge Storage (NVMe):
         icon: mdi-harddisk-plus
         description: "Root: /"
         widget:
           type: glances
-          url: http://192.168.1.3:61208
+          url: [http://192.168.1.3:61208](http://192.168.1.3:61208)
           version: 3
           metric: fs:/
 
@@ -565,107 +589,114 @@ sudo systemctl restart nfs-kernel-server
         description: Public Traffic
         widget:
           type: glances
-          url: http://192.168.1.3:61208
+          url: [http://192.168.1.3:61208](http://192.168.1.3:61208)
           version: 3
           metric: network:enP3p49s0
 
 - Infrastructure:
     - Portainer:
         icon: portainer.png
-        href: https://10.66.66.3:9443
+        href: [https://10.66.66.3:9443](https://10.66.66.3:9443)
         description: Docker Manager
         widget:
           type: portainer
-          url: https://192.168.1.2:9443
+          url: [https://192.168.1.2:9443](https://192.168.1.2:9443)
           env: 9
           key: xxxx
 
     - AdGuard Home (Primary):
         icon: adguard-home.png
-        href: http://10.66.66.3:8085
+        href: [http://10.66.66.3:8085](http://10.66.66.3:8085)
         description: Sentinel DNS
         widget:
           type: adguard
-          url: http://10.66.66.3:8085
+          url: [http://10.66.66.3:8085](http://10.66.66.3:8085)
           username: admin
           password: xxxx
 
     - AdGuard Home (Replica):
         icon: adguard-home.png
-        href: http://10.66.66.5:8085
+        href: [http://10.66.66.5:8085](http://10.66.66.5:8085)
         description: Sentinel DNS
         widget:
           type: adguard
-          url: http://10.66.66.5:8085
+          url: [http://10.66.66.5:8085](http://10.66.66.5:8085)
           username: admin
           password: xxxx
 
 - Media Lab:
     - Jellyfin:
         icon: jellyfin.png
-        href: http://10.66.66.5:8096
+        href: [http://10.66.66.5:8096](http://10.66.66.5:8096)
         description: Watch Movies
         widget:
           type: jellyfin
-          url: http://10.66.66.5:8096
+          url: [http://10.66.66.5:8096](http://10.66.66.5:8096)
           key: xxxx
           enableNowPlaying: true
 
     - qBittorrent:
         icon: qbittorrent.png
-        href: http://10.66.66.5:8080/
+        href: [http://10.66.66.5:8080/](http://10.66.66.5:8080/)
         description: Downloader
         widget:
           type: qbittorrent
-          url: http://10.66.66.5:8080
+          url: [http://10.66.66.5:8080](http://10.66.66.5:8080)
           username: admin
           password: xxxx
 
     - Prowlarr:
         icon: prowlarr.png
-        href: http://10.66.66.5:9696
+        href: [http://10.66.66.5:9696](http://10.66.66.5:9696)
         description: Indexer Manager
         widget:
           type: prowlarr
-          url: http://10.66.66.5:9696
+          url: [http://10.66.66.5:9696](http://10.66.66.5:9696)
           key: xxxx
 
     - Radarr:
         icon: radarr
-        href: http://10.66.66.5:7878
+        href: [http://10.66.66.5:7878](http://10.66.66.5:7878)
         description: Movie Manager
         widget:
           type: radarr
-          url: http://10.66.66.5:7878
+          url: [http://10.66.66.5:7878](http://10.66.66.5:7878)
           key: xxxx
           enableQueue: true
 
     - Sonarr:
         icon: sonarr
-        href: http://10.66.66.5:8989
+        href: [http://10.66.66.5:8989](http://10.66.66.5:8989)
         description: TV Series Manager
         widget:
           type: sonarr
-          url: http://10.66.66.5:8989
+          url: [http://10.66.66.5:8989](http://10.66.66.5:8989)
           key: xxxx
           enableQueue: true
     - Bazarr:
         icon: bazarr.png
-        href: http://10.66.66.5:6767
+        href: [http://10.66.66.5:6767](http://10.66.66.5:6767)
         description: Subtitle Manager
         widget:
           type: bazarr
-          url: http://10.66.66.5:6767
+          url: [http://10.66.66.5:6767](http://10.66.66.5:6767)
           key: xxxx
     
     - Autobrr:
         icon: autobrr.png
-        href: http://10.66.66.5:7474
+        href: [http://10.66.66.5:7474](http://10.66.66.5:7474)
         description: Automation
         widget:
           type: autobrr
-          url: http://10.66.66.5:7474
+          url: [http://10.66.66.5:7474](http://10.66.66.5:7474)
           key: xxxx
+
+    - The Lounge:
+        icon: thelounge.png
+        href: [http://10.66.66.5:9000](http://10.66.66.5:9000)
+        description: IRC Client
+        ping: [http://10.66.66.5:9000](http://10.66.66.5:9000)
+
 
 ```
 
@@ -685,6 +716,7 @@ sudo systemctl restart nfs-kernel-server
     cache: 5 # Time in minutes to cache API responses, to stay within limits
     format: # optional, Intl.NumberFormat options
       maximumFractionDigits: 1
+
 
 ```
 
@@ -710,6 +742,7 @@ services:
       - /home/boyi/mosquitto/config:/mosquitto/config
       - /home/boyi/mosquitto/data:/mosquitto/data
 
+
 ```
 
 **2. `adguard-sync**`
@@ -731,9 +764,10 @@ services:
     ports: ["8080:8080"]
     environment:
       - CRON=*/10 * * * *
-      - ORIGIN_URL=http://192.168.1.2:8085
-      - REPLICA1_URL=http://192.168.1.3:8085
+      - ORIGIN_URL=[http://192.168.1.2:8085](http://192.168.1.2:8085)
+      - REPLICA1_URL=[http://192.168.1.3:8085](http://192.168.1.3:8085)
       # Add Credentials
+
 
 ```
 
@@ -751,6 +785,7 @@ services:
     environment:
       - HOMEPAGE_ALLOWED_HOSTS=*
     restart: unless-stopped
+
 
 ```
 
@@ -770,6 +805,7 @@ nameserver 127.0.0.1
 nameserver 10.66.66.3
 nameserver 8.8.8.8
 
+
 ```
 
 *Lock the file:* `sudo chattr +i /etc/resolv.conf`
@@ -780,6 +816,7 @@ nameserver 8.8.8.8
 echo "net.ipv4.conf.all.rp_filter=0" | sudo tee -a /etc/sysctl.d/99-gluetun.conf
 echo "net.ipv4.conf.default.rp_filter=0" | sudo tee -a /etc/sysctl.d/99-gluetun.conf
 sudo sysctl -p /etc/sysctl.d/99-gluetun.conf
+
 
 ```
 
@@ -815,6 +852,7 @@ sudo iptables -I INPUT -p tcp --dport 445 -j ACCEPT
 sudo iptables -I INPUT -p tcp --dport 139 -j ACCEPT
 sudo netfilter-persistent save
 
+
 ```
 
 ### B. NFS Client (Mount)
@@ -829,6 +867,7 @@ sudo apt install nfs-common -y
 sudo mkdir -p /media/storage/sentinel_pool
 sudo chown -R 1000:1000 /media/storage/sentinel_pool
 
+
 ```
 
 **2. Permanent Mount (`/etc/fstab`):**
@@ -838,6 +877,7 @@ sudo chown -R 1000:1000 /media/storage/sentinel_pool
 ```text
 192.168.1.2:/home/boyi/sentinel_media /media/storage/sentinel_pool nfs defaults,_netdev,timeo=14,intr 0 0
 
+
 ```
 
 **3. Sub-directories:**
@@ -846,6 +886,7 @@ sudo chown -R 1000:1000 /media/storage/sentinel_pool
 sudo mount -a
 sudo mkdir -p /media/storage/sentinel_pool/{movies,tv}
 sudo chown -R 1000:1000 /media/storage/sentinel_pool
+
 
 ```
 
@@ -863,6 +904,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/volumes:/var/lib/docker/volumes
+
 
 ```
 
@@ -1014,6 +1056,7 @@ services:
       - gluetun
     restart: unless-stopped
 
+
 ```
 
 ### E. (Optional) Private Tracker Automation: Cross-Seed
@@ -1037,6 +1080,7 @@ services:
     depends_on: ["gluetun", "qbittorrent", "prowlarr"]
     command: daemon
     restart: unless-stopped
+
 
 ```
 
@@ -1080,6 +1124,7 @@ module.exports = {
   apiKey: "media_lab_secure_key_2025_forge"
 };
 
+
 ```
 
 **3. The "Instant Trigger" Script**
@@ -1105,6 +1150,7 @@ curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:2468/api/webhoo
 
 exit 0
 
+
 ```
 
 *Permissions:*
@@ -1113,6 +1159,7 @@ exit 0
 sudo chmod +x /media/storage/config/radarr/cross_seed_trigger.sh
 # Copy to Sonarr
 sudo cp /media/storage/config/radarr/cross_seed_trigger.sh /media/storage/config/sonarr/
+
 
 ```
 
@@ -1160,6 +1207,7 @@ services:
       - NEXTCLOUD_TRUSTED_DOMAINS=192.168.1.3 10.66.66.5
     restart: always
 
+
 ```
 
 ### G. Stack: `adguard-replica`
@@ -1173,6 +1221,7 @@ services:
     volumes:
       - /home/boyi/adguard/work:/opt/adguardhome/work
       - /home/boyi/adguard/conf:/opt/adguardhome/conf
+
 
 ```
 
@@ -1192,35 +1241,31 @@ services:
 
 * **Problem:** If you manually create the Network/Channel in "IRC Settings" first, the Indexer setup will fail with `UNIQUE constraint failed`.
 * **Fix:**
-1. Go to **Settings  IRC**.
+
+1. Go to **Settings \to IRC**.
 2. **DELETE** the `Darkpeers` network entirely (Click trash icon).
 3. Go to **Indexers** and add DarkPeers.
 4. Let the Indexer **automatically** create the network and join the channel.
 
-
-
 ### C. Step-by-Step Configuration
 
 1. **Add Clients (The Connectors):**
-* Go to **Clients**  **Add New**.
+
+* Go to **Clients** \to **Add New**.
 * **Radarr:**
 * Name: `Forge Radarr`
 * Host: `http://localhost:7878`
 * Key: (From Radarr Settings)
 * **Action:** Click **Test** (Must be Green). Save.
-
-
 * **Sonarr:**
 * Name: `Forge Sonarr`
 * Host: `http://localhost:8989`
 * Key: (From Sonarr Settings)
 * **Action:** Click **Test** (Must be Green). Save.
 
-
-
-
 2. **Add Indexer (The Listener):**
-* Go to **Indexers**  **Add New**.
+
+* Go to **Indexers** \to **Add New**.
 * Select **DarkPeers**.
 * **RSS Key:** Paste your DarkPeers RSS Key.
 * **Nick:** `Boyi_Bot`
@@ -1228,23 +1273,19 @@ services:
 * **Note:** Do not fill in channels manually.
 * **Save.** (Check logs for `INF Monitoring channel #dpannounce`).
 
-
 3. **Create Filter (The Trigger):**
-* Go to **Filters**  **Add New**.
+
+* Go to **Filters** \to **Add New**.
 * **Name:** `DarkPeers Watch`.
 * **Indexer:** Check `DarkPeers`.
 * **Actions Tab:**
-* Add Action  Select **Radarr** (This acts as "Push").
+* Add Action \to Select **Radarr** (This acts as "Push").
 * Name: `Push to Radarr`
 * Client: `Forge Radarr`
 * *Note: There is NO Test button on this specific screen.*
 * **Save Action.**
 * Repeat for Sonarr (`Push to Sonarr`).
-
-
 * **Save Filter.**
-
-
 
 ### D. Verification Protocol
 
@@ -1253,10 +1294,9 @@ How to confirm it works without a successful download:
 1. **Check Logs:** Look for `INF Monitoring channel #dpannounce`.
 2. **Wait for Release:** Watch for a new entry in IRC.
 3. **Check for Rejection:**
+
 * `DBG radarr: release push rejected: [Title] reasons: '[Unknown Movie]'`
 * **Verdict:** **SUCCESS**. The pipeline is open; Radarr just didn't want that specific file.
-
-
 
 ---
 
@@ -1283,14 +1323,14 @@ if [ "$DISK_USAGE" -gt 90 ]; then
     BOT_TOKEN="YOUR_BOT_TOKEN_HERE"
     CHAT_ID="YOUR_CHAT_ID_HERE"
     MSG="🚨 <b>CRITICAL DISK FAILURE</b>%0A%0A<b>$HOSTNAME</b> is at <b>${DISK_USAGE}%</b> capacity!%0ABackup aborted."
-    curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" -d chat_id="$CHAT_ID" -d text="$MSG" -d parse_mode="HTML"
+    curl -s -X POST "[https://api.telegram.org/bot$BOT_TOKEN/sendMessage](https://api.telegram.org/bot$BOT_TOKEN/sendMessage)" -d chat_id="$CHAT_ID" -d text="$MSG" -d parse_mode="HTML"
     exit 1
 fi
 
 # --- SECRETS (Sentinel Only) --------------------------------------------------
 PORTAINER_TOKEN="ptr_YOUR_TOKEN"
 PORTAINER_BACKUP_PASS="YOUR_PASS"
-PORTAINER_URL="https://127.0.0.1:9443"
+PORTAINER_URL="[https://127.0.0.1:9443](https://127.0.0.1:9443)"
 
 mkdir -p "$BACKUP_DIR"
 
@@ -1362,6 +1402,7 @@ echo "Cleaning up local files..."
 cd "$BACKUP_DIR" || exit
 ls -1tr *.tar.gz | head -n -3 | xargs -r rm
 
+
 ```
 
 ### ⏰ Cron Schedules
@@ -1377,6 +1418,7 @@ ls -1tr *.tar.gz | head -n -3 | xargs -r rm
 
 # Watchtower Health Check (Every 5 mins)
 */5 * * * * /usr/local/bin/monitor_lab.sh
+
 
 ```
 
@@ -1401,6 +1443,7 @@ rclone sync "$SOURCE_DIR" "$DEST_DIR" \
     --config /home/boyi/.config/rclone/rclone.conf \
     --transfers=2 --drive-stop-on-upload-limit --verbose >> "$LOG_FILE" 2>&1
 
+
 ```
 
 ---
@@ -1418,15 +1461,20 @@ CHAT_ID="YOUR_ID"
 HEALTH=$(docker inspect --format='{{.State.Health.Status}}' gluetun 2>/dev/null)
 
 if [ "$HEALTH" == "unhealthy" ]; then
-    curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
+    curl -s -X POST "[https://api.telegram.org/bot$BOT_TOKEN/sendMessage](https://api.telegram.org/bot$BOT_TOKEN/sendMessage)" \
         -d chat_id="$CHAT_ID" -d text="⚠️ <b>Forge Alert</b>%0AVPN Unhealthy. Restarting..." -d parse_mode="HTML"
 
     docker restart $CONTAINERS
     sleep 15
-    NEW_IP=$(docker exec gluetun wget -qO- https://ipinfo.io/ip)
+    NEW_IP=$(docker exec gluetun wget -qO- [https://ipinfo.io/ip](https://ipinfo.io/ip))
     
-    curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
+    curl -s -X POST "[https://api.telegram.org/bot$BOT_TOKEN/sendMessage](https://api.telegram.org/bot$BOT_TOKEN/sendMessage)" \
         -d chat_id="$CHAT_ID" -d text="✅ <b>Healed</b>%0ANew IP: <code>$NEW_IP</code>" -d parse_mode="HTML"
 fi
+
+
+```
+
+```
 
 ```
