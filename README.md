@@ -1,7 +1,12 @@
+### 1. MASTER_MANUAL.md (v1.3.5)
+
+* **Change:** Updated Version Header.
+* **Note:** This document remains the ground truth for architecture.
+
 ```markdown
 # 📘 Home Lab Master Architecture & Recovery Guide
 
-**Version:** 1.3.4 (Modular Refactor / Full Execution)
+**Version:** 1.3.5 (Stability Patch / DNS & Nextcloud Fixes)
 **Timezone:** `Asia/Kuala_Lumpur` (UTC+8)
 
 ## 🏗️ Architecture Overview
@@ -788,13 +793,14 @@ sudo chmod +x /usr/local/bin/heal_vpn.sh
 *Run `sudo crontab -e*`
 
 * **Sentinel:**
+
 ```bash
 0 4 * * * /usr/local/bin/daily_backup.sh >> /var/log/backup.log 2>&1
 
 ```
 
-
 * **Forge:**
+
 ```bash
 # Backup & Mirror
 30 4 * * * /usr/local/bin/daily_backup.sh >> /var/log/backup.log 2>&1
@@ -804,8 +810,11 @@ sudo chmod +x /usr/local/bin/heal_vpn.sh
 
 ```
 
-
-
 ```
 
-```
+---
+
+### 2. daily_backup.sh (v1.3.5)
+* **Change:** Updated version comment to `1.3.5`.
+* **Change:** Included `sleep 15` Staged Startup logic.
+

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-#  MASTER BACKUP SCRIPT (v1.3.0 - NFS Aware / Disk-Safe)
+#  MASTER BACKUP SCRIPT (v1.3.5 - Staged Startup Fix)
 # ==============================================================================
 
 # --- CONFIGURATION ------------------------------------------------------------
@@ -16,14 +16,14 @@ if [ "$DISK_USAGE" -gt 90 ]; then
     BOT_TOKEN="YOUR_BOT_TOKEN_HERE"
     CHAT_ID="YOUR_CHAT_ID_HERE"
     MSG="🚨 <b>CRITICAL DISK FAILURE</b>%0A%0A<b>$HOSTNAME</b> is at <b>${DISK_USAGE}%</b> capacity!%0ABackup aborted."
-    curl -s -X POST "[https://api.telegram.org/bot$BOT_TOKEN/sendMessage](https://api.telegram.org/bot$BOT_TOKEN/sendMessage)" -d chat_id="$CHAT_ID" -d text="$MSG" -d parse_mode="HTML"
+    curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" -d chat_id="$CHAT_ID" -d text="$MSG" -d parse_mode="HTML"
     exit 1
 fi
 
 # --- SECRETS (Sentinel Only) --------------------------------------------------
 PORTAINER_TOKEN="ptr_YOUR_TOKEN"
 PORTAINER_BACKUP_PASS="YOUR_PASS"
-PORTAINER_URL="[https://127.0.0.1:9443](https://127.0.0.1:9443)"
+PORTAINER_URL="https://127.0.0.1:9443"
 
 mkdir -p "$BACKUP_DIR"
 
@@ -66,12 +66,22 @@ tar -czf "$ARCHIVE_NAME" \
     --exclude='/home/boyi/sentinel_media' \
     $BACKUP_PATHS
 
-# [4] RESTART CONTAINERS
+# [4] RESTART CONTAINERS (STAGED)
 echo "Restarting containers..."
 if [ "$HOSTNAME" == "sentinel" ]; then
     docker start mosquitto adguardhome homeassistant
 elif [ "$HOSTNAME" == "forge" ]; then
-    docker start adguardhome prowlarr jellyfin qbittorrent radarr sonarr flaresolverr bazarr nextcloud-db nextcloud cross-seed thelounge autobrr
+    # Phase 1: Infrastructure (DNS)
+    echo "  -> Starting DNS (AdGuard)..."
+    docker start adguardhome
+    
+    # Phase 2: Stability Wait
+    echo "  -> Waiting 15s for DNS readiness..."
+    sleep 15
+    
+    # Phase 3: Applications
+    echo "  -> Starting Media Stack..."
+    docker start prowlarr jellyfin qbittorrent radarr sonarr flaresolverr bazarr nextcloud-db nextcloud cross-seed thelounge autobrr
 fi
 
 # [5] UPLOAD
@@ -94,3 +104,4 @@ fi
 echo "Cleaning up local files..."
 cd "$BACKUP_DIR" || exit
 ls -1tr *.tar.gz | head -n -3 | xargs -r rm
+
