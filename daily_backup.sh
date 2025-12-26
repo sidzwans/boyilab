@@ -104,4 +104,3 @@ fi
 echo "Cleaning up local files..."
 cd "$BACKUP_DIR" || exit
 ls -1tr *.tar.gz | head -n -3 | xargs -r rm
-

@@ -1,12 +1,17 @@
-### 1. MASTER_MANUAL.md (v1.3.5)
+**Changes in this version:**
 
-* **Change:** Updated Version Header.
-* **Note:** This document remains the ground truth for architecture.
+1. **Documentation:** Updated Master Manual version to **v1.3.6**.
+2. **`daily_backup.sh`:** Formally integrated the **Staged Startup** (DNS Delay) fix into the Master Manual.
+3. **`cross_seed_trigger.sh`:** Updated the script in the Master Manual and Satellite Files to the **v1.1 Debug/Logging** version to solve "hit and miss" issues.
+
+---
+
+### 1. `MASTER_MANUAL.md`
 
 ```markdown
 # 📘 Home Lab Master Architecture & Recovery Guide
 
-**Version:** 1.3.5 (Stability Patch / DNS & Nextcloud Fixes)
+**Version:** 1.3.6 (Stability Patch / Debugging & Staged Startup)
 **Timezone:** `Asia/Kuala_Lumpur` (UTC+8)
 
 ## 🏗️ Architecture Overview
@@ -654,7 +659,7 @@ cp config.js /media/storage/config/cross-seed/
 
 ```
 
-**3. The "Instant Trigger" Script**
+**3. The "Instant Trigger" Script (v1.1 Debug)**
 
 * **Source File:** `cross_seed_trigger.sh`
 * **Destination:** `/media/storage/config/radarr/cross_seed_trigger.sh`
@@ -755,7 +760,7 @@ services:
 
 ## 💾 Phase 5: Master Backup & Recovery Scripts
 
-**1. Daily Backup Script**
+**1. Daily Backup Script (v1.3.5)**
 
 * **Source File:** `daily_backup.sh`
 * **Destination:** `/usr/local/bin/daily_backup.sh`
@@ -812,9 +817,4 @@ sudo chmod +x /usr/local/bin/heal_vpn.sh
 
 ```
 
----
-
-### 2. daily_backup.sh (v1.3.5)
-* **Change:** Updated version comment to `1.3.5`.
-* **Change:** Included `sleep 15` Staged Startup logic.
 
