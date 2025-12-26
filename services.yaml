@@ -187,6 +187,12 @@
           url: [http://10.66.66.5:8989](http://10.66.66.5:8989)
           key: xxxx
           enableQueue: true
+
+    - Profilarr:
+        icon: profilarr.png
+        href: http://192.168.1.3:6868
+        description: Custom Formats Manager
+
     - Bazarr:
         icon: bazarr.png
         href: [http://10.66.66.5:6767](http://10.66.66.5:6767)
@@ -210,3 +216,4 @@
         href: [http://10.66.66.5:9000](http://10.66.66.5:9000)
         description: IRC Client
         ping: [http://10.66.66.5:9000](http://10.66.66.5:9000)
+

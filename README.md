@@ -1,17 +1,9 @@
-**Changes in this version:**
-
-1. **Documentation:** Updated Master Manual version to **v1.3.6**.
-2. **`daily_backup.sh`:** Formally integrated the **Staged Startup** (DNS Delay) fix into the Master Manual.
-3. **`cross_seed_trigger.sh`:** Updated the script in the Master Manual and Satellite Files to the **v1.1 Debug/Logging** version to solve "hit and miss" issues.
-
----
-
-### 1. `MASTER_MANUAL.md`
+### 1. `MASTER_MANUAL.md` (v1.4.0)
 
 ```markdown
 # 📘 Home Lab Master Architecture & Recovery Guide
 
-**Version:** 1.3.6 (Stability Patch / Debugging & Staged Startup)
+**Version:** 1.4.0 (Feature Add: Profilarr & Dashboard Sync)
 **Timezone:** `Asia/Kuala_Lumpur` (UTC+8)
 
 ## 🏗️ Architecture Overview
@@ -20,7 +12,7 @@
 | --- | --- | --- | --- | --- |
 | **OCI Gateway** | `instance-xxxx` | Public IP | `10.66.66.1` | Internet Gateway, VPN Hub, Monitoring |
 | **Sentinel** | `sentinel` | `192.168.1.2` | `10.66.66.3` | Control Plane, **NFS Server (Cold Storage)** |
-| **Forge** | `forge` | `192.168.1.3` | `10.66.66.5` | Data Plane, **NFS Client**, Media Stack, IRC, Autobrr |
+| **Forge** | `forge` | `192.168.1.3` | `10.66.66.5` | Data Plane, **NFS Client**, Media Stack, IRC, Autobrr, **Profilarr** |
 
 ---
 
@@ -98,7 +90,7 @@ sudo mount -a
 
 # Create Directories
 sudo mkdir -p /media/storage/{movies,tv,downloads,config,nextcloud_data}
-sudo mkdir -p /media/storage/config/{cross-seed,thelounge,autobrr}
+sudo mkdir -p /media/storage/config/{cross-seed,thelounge,autobrr,profilarr}
 sudo chown -R 1000:1000 /media/storage
 
 # Create App Configs
@@ -400,6 +392,7 @@ sudo sysctl -p /etc/sysctl.d/99-gluetun.conf
 # Infrastructure
 sudo iptables -I INPUT -p tcp --dport 9001 -j ACCEPT  # Agent
 sudo iptables -I INPUT -p tcp --dport 8081 -j ACCEPT  # Nextcloud
+sudo iptables -I INPUT -p tcp --dport 6868 -j ACCEPT  # Profilarr (NEW)
 # Media Stack
 sudo iptables -I INPUT -p tcp --dport 8096 -j ACCEPT  # Jellyfin
 sudo iptables -I INPUT -p tcp --dport 8080 -j ACCEPT  # qBit
@@ -625,6 +618,18 @@ services:
       - gluetun
     restart: unless-stopped
 
+  # --- PROFILARR (NEW) ---
+  profilarr:
+    image: santiagosayshey/profilarr:latest
+    container_name: profilarr
+    restart: unless-stopped
+    ports:
+      - "6868:6868"
+    environment:
+      - TZ=Asia/Kuala_Lumpur
+    volumes:
+      - /media/storage/config/profilarr:/config
+
 ```
 
 ### E. (Optional) Private Tracker Automation: Cross-Seed
@@ -680,7 +685,25 @@ sudo cp /media/storage/config/radarr/cross_seed_trigger.sh /media/storage/config
 * **Path:** `/config/cross_seed_trigger.sh`
 * **Test & Save.**
 
-### F. Stack: `private-cloud` (Nextcloud)
+### F. Profilarr Configuration (GUI Guide)
+
+1. **Access:** `http://192.168.1.3:6868`
+2. **Initial Setup:**
+* Connect **Radarr** (`http://gluetun:7878` + API Key)
+* Connect **Sonarr** (`http://gluetun:8989` + API Key)
+* **CRITICAL:** When asked for the database/repo URL or source, ensure you are using:
+`https://github.com/Dictionarry-Hub/database`
+
+
+3. **Syncing Profiles:**
+* Go to **Profiles**.
+* Search for **"1080p"** (Look for `[Dictionarry] Movies 1080p`).
+* Click **Select** (Top Right) -> Click the Profile Card -> Click **Sync** (Bottom/Top Bar).
+* *Mode:* Use **Manual** sync to prevent unwanted overrides.
+
+
+
+### G. Stack: `private-cloud` (Nextcloud)
 
 ```yaml
 services:
@@ -718,7 +741,7 @@ services:
 
 ```
 
-### G. Stack: `adguard-replica`
+### H. Stack: `adguard-replica`
 
 ```yaml
 services:
@@ -812,9 +835,3 @@ sudo chmod +x /usr/local/bin/heal_vpn.sh
 30 5 * * * /usr/local/bin/cloud_mirror.sh >> /var/log/cloud_mirror.log 2>&1
 # VPN Health Check
 */5 * * * * /usr/local/bin/heal_vpn.sh >> /var/log/vpn_healer.log 2>&1
-
-```
-
-```
-
-
